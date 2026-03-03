@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Cart</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* ensure checkout button sits above debug box and is clickable */
+    #toCheckout {
+      position: relative;
+      z-index: 50;
+    }
+
+    /* debug block should not intercept clicks */
+    #apiDebug {
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="siteNav"></div>
+  <main class="container-main">
+    <section class="card-ui p-5">
+      <h3 class="mb-4" style="font-size: 2.5rem;">Your Shopping Cart</h3>
+      <div id="itemsArea" class="mt-4">Loading your items...</div>
+
+      <div class="cart-footer d-flex align-items-center justify-content-between mt-5 pt-4 border-top"
+        style="border-color: var(--glass-border) !important;">
+        <div id="cartTotal" class="total-line m-0" style="font-size: 1.8rem; font-weight: 700;">Total: ₹0</div>
+        <button id="toCheckout" class="btn">Initialize Checkout</button>
+      </div>
+
+      <div id="cartDebug" class="small text-muted" style="margin-top:8px;"></div>
+      <pre id="apiDebug"
+        style="background:#111;color:#efe;padding:8px;border-radius:6px;max-height:160px;overflow:auto;font-size:12px;margin-top:8px;"></pre>
+    </section>
+  </main>
+  <div id="siteFooter"></div>
+
+  <script type="module">
+    import { updateNav, isLoggedIn, fetchJson, formatCurrency, saveLatestOrder, updateNavCounts } from '/js/common.js';
+    // ensure nav updated first
+    await updateNav();
+
+    // query DOM elements AFTER nav update and DOM ready
+    const itemsArea = document.getElementById('itemsArea');
+    const totalEl = document.getElementById('cartTotal');
+    const checkoutBtn = document.getElementById('toCheckout');
+    const debugEl = document.getElementById('cartDebug');
+
+    // attach a robust click handler and log for debugging
+    if (checkoutBtn) {
+      checkoutBtn.disabled = false;
+      checkoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Proceed to Checkout clicked');
+        // require login before showing checkout form
+        if (!isLoggedIn()) {
+          console.log('Not logged in - redirecting to login page');
+          return location.href = '/login.html';
+        }
+        // navigate to checkout form
+        location.href = '/checkout.html';
+      }, { passive: true });
+    } else {
+      console.error('Checkout button not found in DOM');
+    }
+
+    // existing loadCart function (ensure it uses totalEl safely)
+    async function loadCart() {
+      try {
+        const res = await fetchJson('/api/cart');
+        if (!res || !res.ok) {
+          itemsArea.innerHTML = '<div class="notice">Unable to load cart.</div>';
+          if (totalEl) totalEl.textContent = `Total: ${formatCurrency(0)}`;
+          window.cartTotal = 0;
+          return;
+        }
+        const items = res.items || [];
+        if (!items.length) {
+          itemsArea.innerHTML = '<div class="notice">Your cart is empty.</div>';
+          if (totalEl) totalEl.textContent = `Total: ${formatCurrency(0)}`;
+          window.cartTotal = 0;
+          return;
+        }
+        let total = 0;
+        itemsArea.innerHTML = items.map(item => {
+          const name = item.product_name || item.name || 'Product';
+          const price = Number(item.price ?? item.product_price ?? 0) || 0;
+          const qty = Number(item.quantity ?? item.qty) || 1;
+          const line = price * qty;
+          total += line;
+          return `<div class="cart-row">
+            <div class="left">
+              <div class="name">${name}</div>
+              <div class="small">x${qty}</div>
+            </div>
+            <div class="small">${formatCurrency(line)}</div>
+          </div>`;
+        }).join('');
+        if (totalEl) totalEl.textContent = `Total: ${formatCurrency(total)}`;
+        window.cartTotal = total;
+      } catch (err) {
+        console.error('loadCart error', err);
+      }
+    }
+
+    loadCart();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Wishlist</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+  <div id="siteNav"></div>
+  <main class="container-main">
+    <section class="glass-container fade-up p-5">
+      <h3 class="text-gradient mb-4" style="font-size: 2.5rem;">Curation Vault</h3>
+      <div id="wishlist-items" class="mt-4">Scanning your selections...</div>
+      <div id="wishDebug" class="small text-muted mt-2"></div>
+    </section>
+  </main>
+  <script type="text/template" id="wishlist-item-template">
+      <div class="wish-row list-row fade-up py-4" data-wishlist-id="${wishlistId}" data-product-id="${productId}" style="border-bottom: 1px dashed var(--glass-border);">
+        <div class="left d-flex align-items-center gap-4">
+          <div class="cat-icon" style="font-size: 2rem;">❤️</div>
+          <div>
+            <div class="name" style="font-size: 1.2rem; font-weight: 600;">${name}</div>
+            <div class="badge" style="background: rgba(34, 211, 238, 0.1); color: var(--accent-neon);">${price}</div>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <button class="btn btn-sm move-to-cart-btn" data-wishlist-id="${wishlistId}" data-product-id="${productId}">Warp to Cart</button>
+          <button class="btn btn-sm btn-secondary remove-wish-btn" data-wishlist-id="${wishlistId}">Remove</button>
+        </div>
+      </div>
+    </script>
+
+  <script type="module">
+    import {
+      updateNav,
+      fetchJson,
+      formatCurrency,
+      moveWishlistToCart,
+      removeFromWishlist,
+      updateNavCounts,
+      isLoggedIn
+    } from '/js/common.js';
+
+    await updateNav();
+
+    const listEl = document.getElementById('wishlist-items');
+    const debugEl = document.getElementById('wishDebug');
+
+    async function loadWishlist() {
+      listEl.innerHTML = '<div class="text-center py-4">Loading...</div>';
+      debugEl.textContent = '';
+      try {
+        const res = await fetchJson('/api/wishlist');
+        if (!res || !res.ok) {
+          listEl.innerHTML = `<div class="notice">${(res && res.message) || 'Unable to load wishlist'}</div>`;
+          return;
+        }
+        const items = Array.isArray(res.items) ? res.items : [];
+        if (!items.length) {
+          listEl.innerHTML = '<div class="notice">Your wishlist is currently empty. Add some treasures!</div>';
+          return;
+        }
+
+        const itemTemplate = document.getElementById('wishlist-item-template').innerHTML;
+
+        listEl.innerHTML = items.map(it => {
+          const name = it.product_name || it.name || 'Product';
+          const price = formatCurrency(it.price || it.product_price || 0);
+          const wishlistId = it.wishlist_id || it.id || it.wishlistId;
+          const productId = it.product_id || it.productId || it.id;
+
+          // Replace placeholders in the template
+          return itemTemplate
+            .replace(/\${wishlistId}/g, wishlistId)
+            .replace(/\${productId}/g, productId)
+            .replace(/\${name}/g, name)
+            .replace(/\${price}/g, price);
+        }).join('');
+        wireButtons();
+      } catch (err) {
+        console.error('loadWishlist error', err);
+        listEl.innerHTML = '<div class="notice">Error loading wishlist. Check console/network.</div>';
+      }
+    }
+
+    function wireButtons() {
+      document.querySelectorAll('.move-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', async e => {
+          const wishlistId = btn.getAttribute('data-wishlist-id');
+          const productId = btn.getAttribute('data-product-id');
+          if (!await isLoggedIn()) return location.href = '/login.html';
+          btn.disabled = true;
+          debugEl.textContent = 'Moving item to cart...';
+          try {
+            const r = await moveWishlistToCart(wishlistId, productId, 1);
+            console.log('moveWishlistToCart', r);
+            if (!r || !r.ok) {
+              alert(r && r.message ? r.message : 'Could not move to cart');
+              btn.disabled = false;
+              debugEl.textContent = '';
+              return;
+            }
+            // remove row from DOM
+            const row = document.querySelector(`[data-wishlist-id="${wishlistId}"]`);
+            if (row) row.remove();
+            await updateNavCounts();
+            debugEl.textContent = 'Moved to cart';
+            setTimeout(() => debugEl.textContent = '', 1500);
+          } catch (err) {
+            console.error('moveToCart error', err);
+            alert('Action failed. See console.');
+            btn.disabled = false;
+            debugEl.textContent = '';
+          }
+        });
+      });
+
+      document.querySelectorAll('.remove-wish-btn').forEach(btn => {
+        btn.addEventListener('click', async e => {
+          const wishlistId = btn.getAttribute('data-wishlist-id');
+          if (!await isLoggedIn()) return location.href = '/login.html';
+          if (!confirm('Remove this item from wishlist?')) return;
+          btn.disabled = true;
+          debugEl.textContent = 'Removing...';
+          try {
+            const r = await removeFromWishlist(wishlistId);
+            console.log('removeFromWishlist', r);
+            if (!r || !r.ok) {
+              alert(r && r.message ? r.message : 'Could not remove');
+              btn.disabled = false;
+              debugEl.textContent = '';
+              return;
+            }
+            const row = document.querySelector(`[data-wishlist-id="${wishlistId}"]`);
+            if (row) row.remove();
+            await updateNavCounts();
+            debugEl.textContent = 'Removed';
+            setTimeout(() => debugEl.textContent = '', 1000);
+          } catch (err) {
+            console.error('removeWish error', err);
+            alert('Action failed. See console.');
+            btn.disabled = false;
+            debugEl.textContent = '';
+          }
+        });
+      });
+    }
+
+    loadWishlist();
+  </script>
+</body>
+
+</html>

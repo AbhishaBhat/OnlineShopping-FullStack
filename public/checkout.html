@@ -1,0 +1,303 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Checkout</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    #apiDebug {
+      pointer-events: none;
+      background: #111;
+      color: #efe;
+      padding: 8px;
+      border-radius: 6px;
+      max-height: 160px;
+      overflow: auto
+    }
+  </style>
+</head>
+
+<body>
+  <div id="siteNav"></div>
+  <main class="container-main">
+    <div class="row justify-content-center">
+      <div class="col-lg-7 col-md-10">
+        <div class="text-center mb-5 fade-up">
+          <h1 class="text-gradient display-4 fw-bold">Checkout</h1>
+          <p class="text-muted">Please provide your shipping and payment details below.</p>
+        </div>
+
+        <section class="glass-container fade-up p-4 p-md-5 mb-5">
+          <h3 class="text-gradient mb-4">Shipping Information</h3>
+          <form id="checkoutForm" class="auth-form" autocomplete="on">
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="first_name" class="form-label fw-semibold">First Name<span
+                    class="required-asterisk">*</span></label>
+                <input type="text" class="form-control input-themed" id="first_name" name="first_name"
+                  placeholder="First" required>
+              </div>
+              <div class="col-md-6">
+                <label for="last_name" class="form-label fw-semibold">Last Name<span
+                    class="required-asterisk">*</span></label>
+                <input type="text" class="form-control input-themed" id="last_name" name="last_name" placeholder="Last"
+                  required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="street_address" class="form-label fw-semibold">Shipping Address<span
+                  class="required-asterisk">*</span></label>
+              <input type="text" class="form-control input-themed" id="street_address" name="street_address"
+                placeholder="Street Address" required>
+            </div>
+            <div class="mb-3">
+              <input type="text" class="form-control input-themed" id="street_address2" name="street_address2"
+                placeholder="Street Address Line 2">
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="city" class="form-label fw-semibold">City<span class="required-asterisk">*</span></label>
+                <input type="text" class="form-control input-themed" id="city" name="city" placeholder="City" required>
+              </div>
+              <div class="col-md-6">
+                <label for="state" class="form-label fw-semibold">State / Province<span
+                    class="required-asterisk">*</span></label>
+                <input type="text" class="form-control input-themed" id="state" name="state" placeholder="State"
+                  required>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="zip" class="form-label fw-semibold">Postal / Zip Code<span
+                    class="required-asterisk">*</span></label>
+                <input type="text" class="form-control input-themed" id="zip" name="zip" placeholder="Zip Code"
+                  required>
+              </div>
+              <div class="col-md-6">
+                <label for="country" class="form-label fw-semibold">Country</label>
+                <select class="form-control input-themed" id="country" name="country" required>
+                  <option value="" disabled selected>Select Country</option>
+                  <option value="US">United States</option>
+                  <option value="IN">India</option>
+                  <option value="UK">United Kingdom</option>
+                  <option value="CA">Canada</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+              <div class="col-md-6">
+                <label for="phone" class="form-label fw-semibold">Phone Number</label>
+                <input type="tel" class="form-control input-themed" id="phone" name="phone" placeholder="Phone Number"
+                  required>
+              </div>
+              <div class="col-md-6">
+                <label for="paymentMethod" class="form-label fw-semibold">Payment Method</label>
+                <select class="form-control input-themed" id="paymentMethod" name="payment_method">
+                  <option value="COD">Cash on Delivery (COD)</option>
+                  <option value="CARD">Debit / Credit Card</option>
+                  <option value="UPI">UPI Digital Payment</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="paymentDetails" class="mb-4 p-4 rounded-4"
+              style="display:none; background: rgba(244, 114, 182, 0.05); border: 1px dashed var(--rosy-accent);">
+              <div id="cardFields" style="display:none;">
+                <div class="mb-3">
+                  <label class="form-label small fw-bold mb-2">Card Number</label>
+                  <input class="form-control input-themed" id="card_number" placeholder="0000 0000 0000 0000">
+                </div>
+                <div class="row g-3">
+                  <div class="col-8">
+                    <label class="form-label small fw-bold mb-2">Expiry Date</label>
+                    <input class="form-control input-themed" id="card_exp" placeholder="MM/YY">
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label small fw-bold mb-2">CVV</label>
+                    <input class="form-control input-themed" id="card_cvv" placeholder="123">
+                  </div>
+                </div>
+              </div>
+              <div id="upiFields" style="display:none;">
+                <label class="form-label small fw-bold mb-2">UPI ID</label>
+                <input class="form-control input-themed" id="upi_id" placeholder="username@bank">
+              </div>
+            </div>
+
+            <div class="glass-container p-4 mb-5" style="background: rgba(255, 255, 255, 0.3);">
+              <h4 class="text-gradient mb-3">Order Summary</h4>
+              <div id="summary" class="text-muted">
+                <!-- Items injected -->
+              </div>
+              <div id="orderTotal" class="total-line mt-3 pt-3 text-end"
+                style="font-size: 1.5rem; font-weight: 800; color: var(--rosy-deep);">
+                ₹0
+              </div>
+            </div>
+
+            <button class="btn w-100 py-3 fs-5" id="checkoutBtn" type="submit">Place Order</button>
+            <div id="formMsg" class="form-status text-center mt-3"></div>
+            <pre id="apiDebug" class="mt-4" style="display:none;"></pre>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { formatCurrency, fetchJson } from '/js/common.js';
+
+    const summaryEl = document.getElementById('summary');
+    const totalEl = document.getElementById('orderTotal');
+    const apiDebug = document.getElementById('apiDebug');
+    const form = document.getElementById('checkoutForm');
+    const paymentMethodEl = document.getElementById('paymentMethod');
+    const paymentDetails = document.getElementById('paymentDetails');
+    const cardFields = document.getElementById('cardFields');
+    const upiFields = document.getElementById('upiFields');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+
+    let cartItems = [], cartTotal = 0;
+
+    function refreshDebug() {
+      const el = document.getElementById('apiDebug');
+      if (el) el.textContent = JSON.stringify(window.__apiLog?.slice(-8) || [], null, 2);
+    }
+
+    paymentMethodEl.addEventListener('change', () => {
+      const v = paymentMethodEl.value;
+      if (v === 'COD') { paymentDetails.style.display = 'none'; cardFields.style.display = 'none'; upiFields.style.display = 'none'; }
+      else { paymentDetails.style.display = 'block'; cardFields.style.display = (v === 'CARD') ? 'block' : 'none'; upiFields.style.display = (v === 'UPI') ? 'block' : 'none'; }
+    });
+
+    async function loadCart() {
+      summaryEl.textContent = 'Loading cart...';
+      const res = await fetchJson('/api/cart');
+      window.__apiLog = window.__apiLog || []; window.__apiLog.push({ url: '/api/cart', body: res, time: new Date().toISOString() });
+      refreshDebug();
+      if (!res || !res.ok || !Array.isArray(res.items) || res.items.length === 0) {
+        summaryEl.innerHTML = '<div style="color:#bbb">Your cart is empty</div>';
+        cartItems = []; cartTotal = 0; totalEl.textContent = 'Total: ₹0.00'; return;
+      }
+      cartItems = res.items;
+      cartTotal = 0;
+      summaryEl.innerHTML = cartItems.map(it => {
+        const cartId = it.id || it.cart_id || '';
+        const name = it.product_name || it.name || 'Product';
+        const price = Number(it.price || 0) || 0;
+        const qty = Number(it.quantity || it.qty || 1) || 1;
+        const line = price * qty;
+        cartTotal += line;
+        return `
+          <div class="list-row py-3 fade-in" style="border-bottom: 1px dashed var(--rosy-accent-glow);">
+            <div class="left d-flex flex-column">
+              <div class="name" style="font-size: 1.1rem; color: var(--rosy-deep); font-weight: 500;">${name}</div>
+              <div class="text-muted small">${formatCurrency(price)} x ${qty}</div>
+            </div>
+            <div class="text-end">
+              <div class="meta" style="font-weight: 600; color: var(--rosy-rose);">${formatCurrency(line)}</div>
+            </div>
+          </div>`;
+      }).join('');
+      totalEl.textContent = 'Total: ' + formatCurrency(cartTotal);
+      wireButtons();
+    }
+
+    function wireButtons() {
+      document.querySelectorAll('.inc').forEach(b => b.onclick = async () => {
+        const cartId = b.getAttribute('data-cart-id');
+        checkoutBtn.disabled = true;
+        const item = cartItems.find(x => String(x.id || x.cart_id) === String(cartId));
+        if (!item) { checkoutBtn.disabled = false; return; }
+        const newQty = (Number(item.quantity) || 1) + 1;
+        await fetchJson(`/api/cart/${cartId}`, { method: 'PUT', body: { quantity: newQty } });
+        await loadCart();
+        checkoutBtn.disabled = false;
+      });
+      document.querySelectorAll('.dec').forEach(b => b.onclick = async () => {
+        const cartId = b.getAttribute('data-cart-id');
+        checkoutBtn.disabled = true;
+        const item = cartItems.find(x => String(x.id || x.cart_id) === String(cartId));
+        if (!item) { checkoutBtn.disabled = false; return; }
+        const q = Number(item.quantity || 1);
+        if (q <= 1) {
+          await fetchJson(`/api/cart/${cartId}`, { method: 'DELETE' });
+        } else {
+          await fetchJson(`/api/cart/${cartId}`, { method: 'PUT', body: { quantity: q - 1 } });
+        }
+        await loadCart();
+        checkoutBtn.disabled = false;
+      });
+      document.querySelectorAll('.rm').forEach(b => b.onclick = async () => {
+        if (!confirm('Remove this item?')) return;
+        const cartId = b.getAttribute('data-cart-id');
+        checkoutBtn.disabled = true;
+        await fetchJson(`/api/cart/${cartId}`, { method: 'DELETE' });
+        await loadCart();
+        checkoutBtn.disabled = false;
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault(); checkoutBtn.disabled = true; document.getElementById('formMsg').textContent = '';
+      const fd = Object.fromEntries(new FormData(form).entries());
+
+      // Concatenate address fields
+      const fullAddress = [
+        `${fd.first_name} ${fd.last_name}`,
+        fd.street_address,
+        fd.street_address2,
+        `${fd.city}, ${fd.state} ${fd.zip}`,
+        fd.country,
+        `Phone: ${fd.phone}`
+      ].filter(Boolean).join('\n');
+
+      const payload = {
+        address: fullAddress,
+        payment_method: fd.payment_method || 'COD',
+        total_amount: cartTotal,
+        items: cartItems
+      };
+
+      window.__apiLog = window.__apiLog || []; window.__apiLog.push({ action: 'place-payload', payload, time: new Date().toISOString() }); refreshDebug();
+      const res = await fetchJson('/api/orders/checkout', { method: 'POST', body: payload });
+      window.__apiLog.push({ url: '/api/orders/checkout', body: res, time: new Date().toISOString() }); refreshDebug();
+      if (!res || !res.ok) { document.getElementById('formMsg').textContent = res?.message || ('Order failed: ' + (res?.status || 0)); checkoutBtn.disabled = false; return; }
+      const orderId = res.order_id || res.id;
+      if (payload.payment_method !== 'COD') {
+        await fetchJson('/api/payments', {
+          method: 'POST',
+          body: {
+            order_id: orderId,
+            payment_method: payload.payment_method,
+            amount: cartTotal,
+            details: {}
+          }
+        }).catch(() => { });
+      }
+      try { window.open(`/api/orders/${orderId}/invoice`, '_blank'); } catch (e) { }
+      location.href = `/billing.html?order_id=${orderId}`;
+    });
+
+    (async function init() { await loadCart(); })();
+  </script>
+  <script>
+    // Guard for browser extensions that cause "listener returned true" console error.
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage && chrome.runtime.onMessage.addListener) {
+        chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+          // do nothing; do NOT return true unless you call sendResponse asynchronously.
+          return false;
+        });
+      }
+    } catch (e) { /* ignore environment without chrome.runtime */ }
+  </script>
+</body>
+
+</html>

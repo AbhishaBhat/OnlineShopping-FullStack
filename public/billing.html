@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Billing • Happy Shopping</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+  <div id="siteNav"></div>
+  <main class="container-main">
+    <section class="glass-container fade-up p-5 mt-5" id="billCard" style="max-width: 800px; margin: 0 auto;">
+      <div class="text-center mb-5">
+        <div class="cat-icon" style="font-size: 4rem;">⚡</div>
+        <h3 class="text-gradient mt-3" style="font-size: 3rem;">Order Receipt</h3>
+        <p class="text-muted small">Electronic verification from the Cosmic Market</p>
+      </div>
+      <div id="billDetails" class="p-4 rounded-4"
+        style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);">Loading mission data...</div>
+    </section>
+  </main>
+  <div id="siteFooter"></div>
+
+  <script type="module">
+    import { updateNav, redirectIfNotLoggedIn, getLatestOrder, saveLatestOrder, formatCurrency, fetchJson } from '/js/common.js';
+    await updateNav();
+    redirectIfNotLoggedIn();
+
+    const details = document.getElementById('billDetails');
+    const btn = document.getElementById('downloadPdf');
+    const params = new URLSearchParams(location.search);
+    const orderIdParam = params.get('order_id');
+    let order = getLatestOrder();
+
+    if ((!order || (orderIdParam && String(order.id) !== String(orderIdParam))) && orderIdParam) {
+      const fetched = await fetchJson(`/api/orders/${orderIdParam}`);
+      if (fetched.ok && fetched.order) {
+        order = {
+          id: fetched.order.order_id,
+          fullName: fetched.order.full_name,
+          address: fetched.order.shipping_address,
+          phone: fetched.order.phone,
+          items: fetched.order.items || [],
+          total: fetched.order.total_amount,
+          placedAt: fetched.order.order_date
+        };
+        saveLatestOrder(order);
+      }
+    }
+
+    if (!order) {
+      details.innerHTML = '<div class="notice">No order found. Please complete checkout first.</div>';
+      btn.disabled = true;
+    } else {
+      const itemsHtml = (order.items || []).map(item => `
+        <div class="list-row">
+          <div class="left">
+            <div class="name">${item.product_name || item.name || 'Product'}</div>
+            <div class="small">x${item.quantity}</div>
+          </div>
+          <div class="small">${formatCurrency(Number(item.price) * Number(item.quantity))}</div>
+        </div>
+      `).join('');
+      details.innerHTML = `
+        <p><strong>Order ID:</strong> ${order.id}</p>
+        <p><strong>Customer:</strong> ${order.fullName || '-'}</p>
+        <p><strong>Address:</strong> ${order.address || '-'}</p>
+        <p><strong>Phone:</strong> ${order.phone || '-'}</p>
+        <div class="mt-3">
+          <h5>Items</h5>
+          ${itemsHtml || '<div class="small">No line items.</div>'}
+        </div>
+        <div class="total-line">Total: ${formatCurrency(order.total)}</div>
+      `;
+      // Download PDF logic removed
+    }
+  </script>
+</body>
+
+</html>
