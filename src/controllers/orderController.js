@@ -99,7 +99,13 @@ async function checkout(req, res) {
       console.error('order confirmation email failed:', mailErr.message);
     }
 
-    return res.json({ ok: true, message: 'Order placed', order_id, order_email_sent });
+    return res.json({
+      ok: true,
+      message: 'Order placed',
+      order_id,
+      order_email_sent,
+      order_email_to: req.user.email
+    });
   } catch (err) {
     if (conn) { try { await conn.rollback(); conn.release(); } catch (e) { } }
     console.error('checkout error:', err);

@@ -1163,6 +1163,23 @@ textarea.form-control {
   width: 100%;
 }
 
+.order-items-box {
+  background: rgba(8, 10, 16, 0.72);
+  border: 1px solid rgba(103, 232, 249, 0.18);
+  color: #d7dee9;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+}
+
+.order-items-title {
+  color: #67e8f9;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.6rem;
+  text-transform: uppercase;
+}
+
 /* Checkout: wider form surface without changing page behavior */
 .checkout-page {
   max-width: 1180px;

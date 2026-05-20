@@ -382,6 +382,9 @@
       const res = await fetchJson('/api/orders/checkout', { method: 'POST', body: payload });
       window.__apiLog.push({ url: '/api/orders/checkout', body: res, time: new Date().toISOString() }); refreshDebug();
       if (!res || !res.ok) { document.getElementById('formMsg').textContent = res?.message || ('Order failed: ' + (res?.status || 0)); checkoutBtn.disabled = false; return; }
+      if (res.order_email_to) {
+        showToast(`Order confirmation sent to ${res.order_email_to}`, res.order_email_sent ? 'success' : 'error');
+      }
       const orderId = res.order_id || res.id;
       if (payload.payment_method !== 'COD') {
         await fetchJson('/api/payments', {
