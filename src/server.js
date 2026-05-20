@@ -92,6 +92,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/admin');
 
 app.use('/api', authRoutes);
 app.use('/api', categoryRoutes);
@@ -100,6 +101,7 @@ app.use('/api', cartRoutes);
 app.use('/api', wishlistRoutes);
 app.use('/api', orderRoutes);
 app.use('/api', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 // =====================
 // SERVE FRONTEND
@@ -142,8 +144,25 @@ app.use((err, req, res, next) => {
 // =====================
 // START SERVER
 // =====================
-const PORT = process.env.PORT || 8080;
+const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 8080;
+const MAX_FALLBACKS = 5;
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-});
+function startServer(port, attemptsLeft) {
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on port ${port}`);
+  });
+
+  server.on('error', err => {
+    if (err.code === 'EADDRINUSE' && attemptsLeft > 0) {
+      const nextPort = port + 1;
+      console.warn(`Port ${port} is busy. Trying ${nextPort}...`);
+      startServer(nextPort, attemptsLeft - 1);
+      return;
+    }
+
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  });
+}
+
+startServer(DEFAULT_PORT, MAX_FALLBACKS);

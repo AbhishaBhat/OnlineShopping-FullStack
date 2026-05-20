@@ -46,3 +46,26 @@ module.exports.me = (req, res) => {
   const { user_id, full_name, email, phone, address, role, status, last_login, created_at } = req.user;
   return res.json({ ok: true, user: { user_id, full_name, email, phone, address, role, status, last_login, created_at } });
 };
+
+module.exports.updateAddress = async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ ok: false, message: 'Unauthorized' });
+
+    const address = String(req.body.address || '').trim();
+    if (!address) {
+      return res.status(400).json({ ok: false, message: 'Address is required.' });
+    }
+
+    await User.update(req.user.user_id, {
+      full_name: req.user.full_name,
+      email: req.user.email,
+      phone: req.user.phone,
+      address
+    });
+
+    return res.json({ ok: true, message: 'Address updated.', address });
+  } catch (error) {
+    console.error('updateAddress error:', error);
+    return res.status(500).json({ ok: false, message: 'Server error while updating address.' });
+  }
+};

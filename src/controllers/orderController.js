@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { addUserHistory } = require('../utils/history');
+const { sendOrderConfirmationEmail } = require('../utils/mailer');
 const PDFDocument = require('pdfkit');
 
 async function checkout(req, res) {
@@ -71,7 +72,34 @@ async function checkout(req, res) {
 
     await addUserHistory(user_id, `checkout:${order_id}`);
 
-    return res.json({ ok: true, message: 'Order placed', order_id });
+    const orderForEmail = {
+      order_id,
+      full_name: req.user.full_name,
+      email: req.user.email,
+      total_amount: total,
+      order_status: 'PLACED',
+      order_date: new Date(),
+      shipping_address: address,
+      payment_method,
+      items: cartItems.map(it => ({
+        product_id: it.product_id,
+        product_name: it.product_name,
+        quantity: Number(it.quantity),
+        price: Number(it.price),
+        line_total: Number(it.price) * Number(it.quantity)
+      }))
+    };
+
+    let order_email_sent = false;
+    try {
+      await sendOrderConfirmationEmail(req.user.email, orderForEmail);
+      order_email_sent = true;
+      console.log(`order confirmation email sent: order=${order_id} to=${req.user.email}`);
+    } catch (mailErr) {
+      console.error('order confirmation email failed:', mailErr.message);
+    }
+
+    return res.json({ ok: true, message: 'Order placed', order_id, order_email_sent });
   } catch (err) {
     if (conn) { try { await conn.rollback(); conn.release(); } catch (e) { } }
     console.error('checkout error:', err);
