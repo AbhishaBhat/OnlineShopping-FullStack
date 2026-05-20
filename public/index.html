@@ -79,7 +79,7 @@
   <div id="siteFooter"></div>
 
   <script type="module">
-    import { updateNav, fetchJson, isLoggedIn, formatCurrency } from '/js/common.js';
+    import { updateNav, fetchJson, isLoggedIn, formatCurrency, showToast } from '/js/common.js';
     await updateNav();
     const logged = isLoggedIn();
 
@@ -89,11 +89,11 @@
     catGo?.addEventListener('click', () => {
       if (!catSelect) return;
       if (!catSelect.value) {
-        alert('Please pick a galaxy sector (category) first!');
+        showToast('Please pick a category first.', 'error');
         return;
       }
       if (!isLoggedIn()) {
-        alert('Please Join to enter this sector.');
+        showToast('Please sign in to explore products.', 'error');
         location.href = '/login.html';
         return;
       }
@@ -126,13 +126,17 @@
         prodContainer.innerHTML = '<div class="notice">Products will appear soon.</div>';
         return;
       }
+      const productPlaceholder = name => `https://placehold.co/600x450/111827/67e8f9?text=${encodeURIComponent(String(name || 'Product').slice(0, 32))}`;
       prodContainer.innerHTML = resp.products.map(prod => `
         <div class="card-ui">
           <div class="product-image-wrapper">
-            <img src="${prod.image_url || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=500'}" alt="${prod.name}" class="product-image">
+            <img src="${prod.image_url || productPlaceholder(prod.name)}" alt="${prod.name}" class="product-image" onerror="this.onerror=null;this.src='${productPlaceholder(prod.name)}';">
           </div>
           <h4 class="mb-2">${prod.name}</h4>
-          <div class="badge mb-3">${formatCurrency(prod.price)}</div>
+          <div class="product-meta">
+            <div class="badge">${formatCurrency(prod.price)}</div>
+            <span class="stock-pill ${Number(prod.stock || 0) <= 0 ? 'out' : Number(prod.stock || 0) <= 5 ? 'low' : 'healthy'}">${Number(prod.stock || 0) <= 0 ? 'Out of stock' : Number(prod.stock || 0) <= 5 ? `${prod.stock} left` : 'Available'}</span>
+          </div>
           <p class="text-muted small mb-4">${prod.description || 'Quality product for your daily needs.'}</p>
           <div class="actions">
             <a class="btn w-100" href="/products.html?category_id=${prod.category_id || ''}">Explore Category</a>
@@ -144,7 +148,6 @@
     initCategories();
     populateProducts();
   </script>
-  <h1>Endgamer</h1>
 </body>
 
 </html>

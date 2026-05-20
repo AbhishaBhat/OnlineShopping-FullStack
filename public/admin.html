@@ -1,0 +1,584 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Admin Portal - Happy Shopping</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+  <div id="siteNav"></div>
+  <main class="container-main admin-page">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Owner control center</p>
+        <h1>Admin Portal</h1>
+      </div>
+      <button class="btn btn-secondary" id="refreshAll">Refresh Data</button>
+    </section>
+
+    <nav class="admin-tabs" aria-label="Admin sections">
+      <button class="admin-tab active" data-tab="overview">Overview</button>
+      <button class="admin-tab" data-tab="products">Products</button>
+      <button class="admin-tab" data-tab="categories">Categories</button>
+      <button class="admin-tab" data-tab="users">Users</button>
+      <button class="admin-tab" data-tab="orders">Orders</button>
+      <button class="admin-tab" data-tab="activity">Activity</button>
+    </nav>
+
+    <section class="admin-section active" id="tab-overview">
+      <div class="metric-grid" id="metricGrid"></div>
+      <div class="admin-layout">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Revenue</p>
+              <h2>Last 30 Days</h2>
+            </div>
+          </div>
+          <div class="bar-chart bar-chart-wide" id="dailyRevenue"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Risk</p>
+              <h2>Low Stock</h2>
+            </div>
+          </div>
+          <div class="compact-list" id="lowStockList"></div>
+        </div>
+      </div>
+      <div class="admin-layout">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Best sellers</p>
+              <h2>Top Products</h2>
+            </div>
+          </div>
+          <div class="compact-list" id="topProducts"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Customers</p>
+              <h2>Top Buyers</h2>
+            </div>
+          </div>
+          <div class="compact-list" id="topCustomers"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-section" id="tab-products">
+      <div class="admin-layout admin-layout-products">
+        <form class="panel admin-form" id="productForm">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Catalog</p>
+              <h2 id="productFormTitle">Add Product</h2>
+            </div>
+            <button class="btn btn-secondary" id="resetProductForm" type="button">Clear</button>
+          </div>
+          <input type="hidden" name="id" id="productId">
+          <label class="form-label">Product name</label>
+          <input class="form-control" name="name" required>
+          <label class="form-label">Category</label>
+          <select class="form-control" name="category_id" id="productCategory"></select>
+          <div class="form-grid">
+            <div>
+              <label class="form-label">Price</label>
+              <input class="form-control" name="price" type="number" min="0" step="0.01" required>
+            </div>
+            <div>
+              <label class="form-label">Stock</label>
+              <input class="form-control" name="stock" type="number" min="0" step="1" required>
+            </div>
+          </div>
+          <label class="form-label">Image URL</label>
+          <input class="form-control" name="image_url" placeholder="https://...">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" name="description" rows="4"></textarea>
+          <button class="btn" type="submit">Save Product</button>
+        </form>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Inventory and sales</p>
+              <h2>Products</h2>
+            </div>
+            <input class="form-control admin-search" id="productSearch" placeholder="Search products">
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Sold</th>
+                  <th>Revenue</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="productRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-section" id="tab-categories">
+      <div class="admin-layout">
+        <form class="panel admin-form" id="categoryForm">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Collections</p>
+              <h2>Add Category</h2>
+            </div>
+          </div>
+          <label class="form-label">Category name</label>
+          <input class="form-control" name="name" required>
+          <label class="form-label">Description</label>
+          <textarea class="form-control" name="description" rows="4"></textarea>
+          <button class="btn" type="submit">Add Category</button>
+        </form>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Manage</p>
+              <h2>Categories</h2>
+            </div>
+          </div>
+          <div class="compact-list" id="categoryList"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-section" id="tab-users">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">People</p>
+            <h2>All Users</h2>
+          </div>
+          <input class="form-control admin-search" id="userSearch" placeholder="Search users">
+        </div>
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Contact</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Orders</th>
+                <th>Spent</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="userRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-section" id="tab-orders">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Fulfillment</p>
+            <h2>Orders</h2>
+          </div>
+          <input class="form-control admin-search" id="orderSearch" placeholder="Search orders">
+        </div>
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Items</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Update</th>
+              </tr>
+            </thead>
+            <tbody id="orderRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-section" id="tab-activity">
+      <div class="admin-layout">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Sales mix</p>
+              <h2>Categories</h2>
+            </div>
+          </div>
+          <div class="compact-list" id="categorySales"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Audit trail</p>
+              <h2>Admin Activity</h2>
+            </div>
+          </div>
+          <div class="compact-list" id="activityList"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { updateNav, fetchJson, formatCurrency, showToast, getProfile } from '/js/common.js';
+
+    await updateNav();
+    const profile = await getProfile();
+    if (!profile || profile.role !== 'admin') {
+      showToast('Admin access required', 'error');
+      window.setTimeout(() => location.href = '/login.html', 700);
+      await new Promise(() => {});
+    }
+
+    const state = {
+      dashboard: null,
+      analytics: null,
+      products: [],
+      categories: [],
+      users: [],
+      orders: [],
+      activity: []
+    };
+
+    const ids = {
+      metricGrid: document.getElementById('metricGrid'),
+      dailyRevenue: document.getElementById('dailyRevenue'),
+      lowStockList: document.getElementById('lowStockList'),
+      topProducts: document.getElementById('topProducts'),
+      topCustomers: document.getElementById('topCustomers'),
+      productRows: document.getElementById('productRows'),
+      productSearch: document.getElementById('productSearch'),
+      productForm: document.getElementById('productForm'),
+      productId: document.getElementById('productId'),
+      productFormTitle: document.getElementById('productFormTitle'),
+      productCategory: document.getElementById('productCategory'),
+      categoryForm: document.getElementById('categoryForm'),
+      categoryList: document.getElementById('categoryList'),
+      userRows: document.getElementById('userRows'),
+      userSearch: document.getElementById('userSearch'),
+      orderRows: document.getElementById('orderRows'),
+      orderSearch: document.getElementById('orderSearch'),
+      categorySales: document.getElementById('categorySales'),
+      activityList: document.getElementById('activityList')
+    };
+
+    const statuses = ['PLACED', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.admin-section').forEach(el => el.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+      });
+    });
+
+    document.getElementById('refreshAll').addEventListener('click', async () => {
+      await loadAll();
+      showToast('Admin data refreshed', 'success');
+    });
+
+    ids.productSearch.addEventListener('input', renderProducts);
+    ids.userSearch.addEventListener('input', renderUsers);
+    ids.orderSearch.addEventListener('input', renderOrders);
+    document.getElementById('resetProductForm').addEventListener('click', resetProductForm);
+
+    ids.productForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const body = Object.fromEntries(new FormData(ids.productForm).entries());
+      const id = body.id;
+      delete body.id;
+      const resp = await fetchJson(id ? `/api/admin/products/${id}` : '/api/admin/products', {
+        method: id ? 'PUT' : 'POST',
+        body
+      });
+      showToast(resp.message || (resp.ok ? 'Product saved' : 'Unable to save product'), resp.ok ? 'success' : 'error');
+      if (resp.ok) {
+        resetProductForm();
+        await loadProducts();
+        await loadDashboard();
+        await loadAnalytics();
+      }
+    });
+
+    ids.categoryForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const body = Object.fromEntries(new FormData(ids.categoryForm).entries());
+      const resp = await fetchJson('/api/admin/categories', { method: 'POST', body });
+      showToast(resp.message || (resp.ok ? 'Category added' : 'Unable to add category'), resp.ok ? 'success' : 'error');
+      if (resp.ok) {
+        ids.categoryForm.reset();
+        await loadCategories();
+      }
+    });
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+    }
+
+    function number(value) {
+      return new Intl.NumberFormat('en-IN').format(Number(value || 0));
+    }
+
+    function rowMatches(row, query, fields) {
+      if (!query) return true;
+      return fields.some(field => String(row[field] || '').toLowerCase().includes(query));
+    }
+
+    function renderMetrics() {
+      const stats = state.dashboard?.stats || {};
+      const metrics = [
+        ['Revenue', formatCurrency(stats.total_revenue), 'Completed revenue'],
+        ['Orders', number(stats.orders), 'All orders'],
+        ['Products', number(stats.products), 'Catalog items'],
+        ['Customers', number(stats.users), 'All accounts'],
+        ['Categories', number(stats.categories), 'Collections'],
+        ['Avg Order', formatCurrency(stats.average_order_value), 'AOV']
+      ];
+      ids.metricGrid.innerHTML = metrics.map(([label, value, detail]) => `
+        <article class="metric-card"><span>${label}</span><strong>${value}</strong><small>${detail}</small></article>
+      `).join('');
+    }
+
+    function renderBars(el, rows, valueKey, labelKey = 'day') {
+      if (!rows.length) {
+        el.innerHTML = '<div class="notice">No data yet.</div>';
+        return;
+      }
+      const max = Math.max(...rows.map(r => Number(r[valueKey] || 0)), 1);
+      el.innerHTML = rows.map(row => {
+        const h = Math.max(8, Math.round((Number(row[valueKey] || 0) / max) * 150));
+        const label = labelKey === 'day'
+          ? new Date(row.day).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+          : row[labelKey];
+        return `<div class="bar-item"><div class="bar-value">${formatCurrency(row[valueKey])}</div><div class="bar-track"><span style="height:${h}px"></span></div><small>${escapeHtml(label)}</small></div>`;
+      }).join('');
+    }
+
+    function compactList(el, rows, empty, mapper) {
+      el.innerHTML = rows.length ? rows.map(mapper).join('') : `<div class="notice">${empty}</div>`;
+    }
+
+    function renderOverview() {
+      renderMetrics();
+      renderBars(ids.dailyRevenue, state.analytics?.daily || [], 'revenue');
+      compactList(ids.lowStockList, state.dashboard?.low_stock || [], 'All products have healthy stock.', item => `
+        <div class="list-row"><div><strong>${escapeHtml(item.name)}</strong><small>${formatCurrency(item.price)}</small></div><span class="stock-pill low">${item.stock} left</span></div>
+      `);
+      compactList(ids.topProducts, state.dashboard?.top_products || [], 'No sales yet.', item => `
+        <div class="list-row"><div><strong>${escapeHtml(item.name)}</strong><small>${number(item.units_sold)} sold</small></div><span>${formatCurrency(item.revenue)}</span></div>
+      `);
+      compactList(ids.topCustomers, state.dashboard?.top_customers || [], 'No customer spending yet.', item => `
+        <div class="list-row"><div><strong>${escapeHtml(item.full_name)}</strong><small>${escapeHtml(item.email)} · ${number(item.orders)} orders</small></div><span>${formatCurrency(item.total_spent)}</span></div>
+      `);
+    }
+
+    function renderProducts() {
+      const q = ids.productSearch.value.trim().toLowerCase();
+      const rows = state.products.filter(row => rowMatches(row, q, ['name', 'category', 'description']));
+      ids.productRows.innerHTML = rows.map(product => `
+        <tr>
+          <td><strong>${escapeHtml(product.name)}</strong><small>#${product.id}</small></td>
+          <td>${escapeHtml(product.category || 'Uncategorized')}</td>
+          <td>${formatCurrency(product.price)}</td>
+          <td><span class="stock-pill ${product.stock <= 0 ? 'out' : product.stock <= 5 ? 'low' : 'healthy'}">${product.stock}</span></td>
+          <td>${number(product.units_sold)}</td>
+          <td>${formatCurrency(product.revenue)}</td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn-secondary edit-product" data-id="${product.id}">Edit</button>
+              <button class="btn btn-secondary delete-product" data-id="${product.id}">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="7">No products found.</td></tr>';
+
+      document.querySelectorAll('.edit-product').forEach(btn => btn.addEventListener('click', () => {
+        const product = state.products.find(item => String(item.id) === btn.dataset.id);
+        if (!product) return;
+        ids.productFormTitle.textContent = 'Edit Product';
+        ids.productId.value = product.id;
+        ids.productForm.name.value = product.name || '';
+        ids.productForm.category_id.value = product.category_id || '';
+        ids.productForm.price.value = product.price || 0;
+        ids.productForm.stock.value = product.stock || 0;
+        ids.productForm.image_url.value = product.image_url || '';
+        ids.productForm.description.value = product.description || '';
+        document.querySelector('[data-tab="products"]').click();
+        ids.productForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }));
+
+      document.querySelectorAll('.delete-product').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this product? This can also remove linked cart/wishlist/order item rows.')) return;
+        const resp = await fetchJson(`/api/admin/products/${btn.dataset.id}`, { method: 'DELETE' });
+        showToast(resp.message || (resp.ok ? 'Product deleted' : 'Unable to delete product'), resp.ok ? 'success' : 'error');
+        if (resp.ok) await loadProducts();
+      }));
+    }
+
+    function renderProductCategoryOptions() {
+      ids.productCategory.innerHTML = '<option value="">Uncategorized</option>' +
+        state.categories.map(cat => `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`).join('');
+    }
+
+    function resetProductForm() {
+      ids.productForm.reset();
+      ids.productId.value = '';
+      ids.productFormTitle.textContent = 'Add Product';
+    }
+
+    function renderCategories() {
+      renderProductCategoryOptions();
+      compactList(ids.categoryList, state.categories, 'No categories yet.', cat => `
+        <div class="list-row">
+          <div><strong>${escapeHtml(cat.name)}</strong><small>${escapeHtml(cat.description || 'No description')} · ${number(cat.products)} products</small></div>
+          <button class="btn btn-secondary delete-category" data-id="${cat.id}">Delete</button>
+        </div>
+      `);
+      document.querySelectorAll('.delete-category').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this category? Products will become uncategorized.')) return;
+        const resp = await fetchJson(`/api/admin/categories/${btn.dataset.id}`, { method: 'DELETE' });
+        showToast(resp.message || (resp.ok ? 'Category deleted' : 'Unable to delete category'), resp.ok ? 'success' : 'error');
+        if (resp.ok) await loadCategories();
+      }));
+    }
+
+    function renderUsers() {
+      const q = ids.userSearch.value.trim().toLowerCase();
+      const rows = state.users.filter(row => rowMatches(row, q, ['full_name', 'email', 'phone', 'role', 'status']));
+      ids.userRows.innerHTML = rows.map(user => `
+        <tr>
+          <td><strong>${escapeHtml(user.full_name)}</strong><small>#${user.id} · joined ${new Date(user.created_at).toLocaleDateString('en-IN')}</small></td>
+          <td><strong>${escapeHtml(user.email)}</strong><small>${escapeHtml(user.phone || 'No phone')}</small></td>
+          <td><select class="table-input user-role" data-id="${user.id}"><option value="user" ${user.role === 'user' ? 'selected' : ''}>user</option><option value="admin" ${user.role === 'admin' ? 'selected' : ''}>admin</option></select></td>
+          <td><select class="table-input user-status" data-id="${user.id}"><option value="active" ${user.status === 'active' ? 'selected' : ''}>active</option><option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>inactive</option></select></td>
+          <td>${number(user.orders)}</td>
+          <td>${formatCurrency(user.total_spent)}</td>
+          <td><button class="btn btn-secondary delete-user" data-id="${user.id}">Delete</button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="7">No users found.</td></tr>';
+
+      document.querySelectorAll('.user-role,.user-status').forEach(el => el.addEventListener('change', async () => {
+        const id = el.dataset.id;
+        const row = el.closest('tr');
+        const role = row.querySelector('.user-role').value;
+        const status = row.querySelector('.user-status').value;
+        const resp = await fetchJson(`/api/admin/users/${id}`, { method: 'PUT', body: { role, status } });
+        showToast(resp.message || (resp.ok ? 'User updated' : 'Unable to update user'), resp.ok ? 'success' : 'error');
+        if (resp.ok) await loadUsers();
+      }));
+
+      document.querySelectorAll('.delete-user').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this user and their related data?')) return;
+        const resp = await fetchJson(`/api/admin/users/${btn.dataset.id}`, { method: 'DELETE' });
+        showToast(resp.message || (resp.ok ? 'User deleted' : 'Unable to delete user'), resp.ok ? 'success' : 'error');
+        if (resp.ok) await loadUsers();
+      }));
+    }
+
+    function renderOrders() {
+      const q = ids.orderSearch.value.trim().toLowerCase();
+      const rows = state.orders.filter(row => rowMatches(row, q, ['order_id', 'full_name', 'email', 'payment_method', 'order_status']));
+      ids.orderRows.innerHTML = rows.map(order => `
+        <tr>
+          <td><strong>#${order.order_id}</strong><small>${new Date(order.order_date).toLocaleString('en-IN')}</small></td>
+          <td><strong>${escapeHtml(order.full_name || 'Customer')}</strong><small>${escapeHtml(order.email || '')}</small></td>
+          <td>${formatCurrency(order.total_amount)}</td>
+          <td>${number(order.item_count)} items</td>
+          <td>${escapeHtml(order.payment_method || 'COD')}</td>
+          <td><span class="stock-pill">${escapeHtml(order.order_status)}</span></td>
+          <td><select class="table-input order-status" data-id="${order.order_id}">${statuses.map(status => `<option value="${status}" ${order.order_status === status ? 'selected' : ''}>${status}</option>`).join('')}</select></td>
+        </tr>
+      `).join('') || '<tr><td colspan="7">No orders found.</td></tr>';
+
+      document.querySelectorAll('.order-status').forEach(el => el.addEventListener('change', async () => {
+        const resp = await fetchJson(`/api/admin/orders/${el.dataset.id}/status`, { method: 'PUT', body: { status: el.value } });
+        showToast(resp.message || (resp.ok ? 'Order updated' : 'Unable to update order'), resp.ok ? 'success' : 'error');
+        if (resp.ok) await loadOrders();
+      }));
+    }
+
+    function renderActivity() {
+      compactList(ids.categorySales, state.analytics?.categories || [], 'No category sales yet.', row => `
+        <div class="list-row"><div><strong>${escapeHtml(row.name)}</strong><small>${number(row.units_sold)} units sold</small></div><span>${formatCurrency(row.revenue)}</span></div>
+      `);
+      compactList(ids.activityList, state.activity, 'No admin activity yet.', row => `
+        <div class="list-row"><div><strong>${escapeHtml(row.action)}</strong><small>${new Date(row.action_time).toLocaleString('en-IN')}</small></div><span>#${row.activity_id}</span></div>
+      `);
+    }
+
+    async function loadDashboard() {
+      const resp = await fetchJson('/api/admin/dashboard');
+      if (resp.ok) state.dashboard = resp;
+      renderOverview();
+    }
+
+    async function loadAnalytics() {
+      const resp = await fetchJson('/api/admin/analytics');
+      if (resp.ok) state.analytics = resp;
+      renderOverview();
+      renderActivity();
+    }
+
+    async function loadProducts() {
+      const resp = await fetchJson('/api/admin/products');
+      if (resp.ok) state.products = resp.products || [];
+      renderProducts();
+    }
+
+    async function loadCategories() {
+      const resp = await fetchJson('/api/admin/categories');
+      if (resp.ok) state.categories = resp.categories || [];
+      renderCategories();
+    }
+
+    async function loadUsers() {
+      const resp = await fetchJson('/api/admin/users');
+      if (resp.ok) state.users = resp.users || [];
+      renderUsers();
+    }
+
+    async function loadOrders() {
+      const resp = await fetchJson('/api/admin/orders');
+      if (resp.ok) state.orders = resp.orders || [];
+      renderOrders();
+    }
+
+    async function loadActivity() {
+      const resp = await fetchJson('/api/admin/activity');
+      if (resp.ok) state.activity = resp.activity || [];
+      renderActivity();
+    }
+
+    async function loadAll() {
+      await Promise.all([loadDashboard(), loadAnalytics(), loadCategories(), loadProducts(), loadUsers(), loadOrders(), loadActivity()]);
+      renderOverview();
+    }
+
+    await loadAll();
+  </script>
+</body>
+
+</html>

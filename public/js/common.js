@@ -6,7 +6,26 @@ export function getToken() {
   try { return localStorage.getItem('token'); } catch { return null; }
 }
 export function isLoggedIn() {
-  return !!getToken();
+  const token = getToken();
+  if (!token) return false;
+  if (isTokenExpired(token)) {
+    clearAuth();
+    return false;
+  }
+  return true;
+}
+export function clearAuth() {
+  try { localStorage.removeItem('token'); } catch { }
+}
+
+function isTokenExpired(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (!payload.exp) return false;
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
 }
 
 // Robust fetch wrapper that logs last responses to window.__apiLog (visible via #apiDebug)
@@ -30,12 +49,9 @@ export async function fetchJson(url, opts = {}) {
 // Single quiet profile fetch — returns normalized user object or null (no noisy 404 spam)
 export async function getProfile() {
   try {
-    const res = await fetch('/api/user/me', { credentials: 'include' });
-    if (!res || res.status === 404 || res.status === 204) return null;
-    const text = await res.text();
-    if (!text) return null;
-    let data;
-    try { data = JSON.parse(text); } catch { return null; }
+    const data = await fetchJson('/api/me');
+    if (data && data.status === 401) clearAuth();
+    if (!data || !data.ok) return null;
     const u = data.user || data.data?.user || data.profile || data;
     return u || null;
   } catch (err) {
@@ -47,7 +63,10 @@ export async function getProfile() {
 export async function updateNav() {
   const nav = document.getElementById('siteNav');
   if (!nav) return;
-  const logged = isLoggedIn();
+  let logged = isLoggedIn();
+  const profile = logged ? await getProfile() : null;
+  if (logged && !profile) logged = false;
+  const isAdmin = profile && profile.role === 'admin';
   nav.innerHTML = `
     <nav class="main-nav">
       <div class="nav-left">
@@ -57,7 +76,7 @@ export async function updateNav() {
       <div class="search-container">
         <form id="navSearchForm" class="nav-search-form">
           <input type="text" id="navSearchInput" placeholder="Search products..." class="nav-search-input">
-          <button type="submit" class="search-btn">🔍</button>
+          <button type="submit" class="search-btn" aria-label="Search">Search</button>
         </form>
       </div>
 
@@ -66,10 +85,11 @@ export async function updateNav() {
         <li><a href="/categories.html">Collections</a></li>
         <li><a href="/products.html">Explore</a></li>
         <li><a href="/orders.html">Orders</a></li>
+        ${isAdmin ? `<li><a href="/admin.html">Admin</a></li>` : ''}
       </ul>
       <div class="nav-actions">
-        <a class="pill pill-outline" href="/cart.html">🛒 <span id="navCartCount">0</span></a>
-        <a class="pill pill-outline" href="/wishlist.html">❤️ <span id="navWishCount">0</span></a>
+        <a class="pill pill-outline" href="/cart.html">Cart <span id="navCartCount">0</span></a>
+        <a class="pill pill-outline" href="/wishlist.html">Wishlist <span id="navWishCount">0</span></a>
         ${logged ? `<button id="logoutBtn" class="pill pill-primary">Exit</button>` : `<a class="pill pill-primary" href="/login.html">Join</a>`}
       </div>
     </nav>
@@ -98,6 +118,12 @@ export async function updateNavCounts() {
   }
   try {
     const [cart, wish] = await Promise.all([fetchJson('/api/cart'), fetchJson('/api/wishlist')]);
+    if ((cart && cart.status === 401) || (wish && wish.status === 401)) {
+      clearAuth();
+      if (cartEl) cartEl.textContent = '0';
+      if (wishEl) wishEl.textContent = '0';
+      return;
+    }
     if (cartEl) {
       const count = cart && Array.isArray(cart.items) ? cart.items.reduce((s, i) => s + (Number(i.quantity) || 0), 0) : 0;
       cartEl.textContent = String(count);
@@ -113,7 +139,11 @@ export async function updateNavCounts() {
 }
 
 export function redirectIfNotLoggedIn() {
-  if (!isLoggedIn()) location.href = '/login.html';
+  if (!isLoggedIn()) {
+    location.href = '/login.html';
+    return false;
+  }
+  return true;
 }
 
 /* Cart / wishlist helpers */
@@ -224,3 +254,24 @@ export async function createPayment(order_id, payment_method, amount = 0, detail
 
 /* Utilities */
 export function formatCurrency(amount) { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(amount || 0)); }
+
+export function showToast(message, type = 'info') {
+  let host = document.getElementById('toastHost');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'toastHost';
+    host.className = 'toast-host';
+    document.body.appendChild(host);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `app-toast toast-${type}`;
+  toast.textContent = message;
+  host.appendChild(toast);
+
+  window.setTimeout(() => toast.classList.add('is-visible'), 20);
+  window.setTimeout(() => {
+    toast.classList.remove('is-visible');
+    window.setTimeout(() => toast.remove(), 250);
+  }, 2800);
+}

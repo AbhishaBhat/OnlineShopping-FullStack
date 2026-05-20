@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS admin_activity;
 DROP TABLE IF EXISTS user_history;
 DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS product_reviews;
 DROP TABLE IF EXISTS wishlist;
 DROP TABLE IF EXISTS cart;
 DROP TABLE IF EXISTS products;
@@ -41,6 +42,20 @@ CREATE TABLE products (
     category_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL
+);
+
+CREATE TABLE product_reviews (
+    review_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    user_id INT NOT NULL,
+    rating TINYINT NOT NULL,
+    review_text TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_product_user_review (product_id, user_id),
+    CHECK (rating BETWEEN 1 AND 5)
 );
 
 CREATE TABLE cart (

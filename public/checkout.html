@@ -21,17 +21,32 @@
 
 <body>
   <div id="siteNav"></div>
-  <main class="container-main">
+  <main class="container-main checkout-page">
     <div class="row justify-content-center">
-      <div class="col-lg-7 col-md-10">
+      <div class="col-lg-7 col-md-10 checkout-shell">
         <div class="text-center mb-5 fade-up">
           <h1 class="text-gradient display-4 fw-bold">Checkout</h1>
           <p class="text-muted">Please provide your shipping and payment details below.</p>
         </div>
 
-        <section class="glass-container fade-up p-4 p-md-5 mb-5">
+        <section class="glass-container fade-up p-4 p-md-5 mb-5 checkout-card">
           <h3 class="text-gradient mb-4">Shipping Information</h3>
-          <form id="checkoutForm" class="auth-form" autocomplete="on">
+          <div id="savedAddressPanel" class="address-panel mb-4" style="display:none;">
+            <div>
+              <div class="form-label fw-semibold">Saved Address</div>
+              <div id="savedAddressText" class="saved-address-text"></div>
+            </div>
+            <div class="address-actions">
+              <button class="btn btn-secondary address-mode active" type="button" data-mode="saved">Use Saved</button>
+              <button class="btn btn-secondary address-mode" type="button" data-mode="edit">Edit</button>
+              <button class="btn btn-secondary address-mode" type="button" data-mode="new">Add New</button>
+            </div>
+          </div>
+          <div id="noAddressPanel" class="notice mb-4" style="display:none;">
+            Add a delivery address below before placing your order.
+          </div>
+          <form id="checkoutForm" class="auth-form" autocomplete="on" novalidate>
+            <div id="addressFields">
             <div class="row g-3 mb-4">
               <div class="col-md-6">
                 <label for="first_name" class="form-label fw-semibold">First Name<span
@@ -89,6 +104,12 @@
                 </select>
               </div>
             </div>
+            </div>
+
+            <label class="save-address-option" id="saveAddressWrap">
+              <input type="checkbox" id="saveAddress" checked>
+              Save this address to my account
+            </label>
 
             <div class="row g-4 mb-4">
               <div class="col-md-6">
@@ -151,12 +172,18 @@
   </main>
 
   <script type="module">
-    import { formatCurrency, fetchJson } from '/js/common.js';
+    import { formatCurrency, fetchJson, getProfile, showToast } from '/js/common.js';
 
     const summaryEl = document.getElementById('summary');
     const totalEl = document.getElementById('orderTotal');
     const apiDebug = document.getElementById('apiDebug');
     const form = document.getElementById('checkoutForm');
+    const addressFields = document.getElementById('addressFields');
+    const savedAddressPanel = document.getElementById('savedAddressPanel');
+    const noAddressPanel = document.getElementById('noAddressPanel');
+    const savedAddressText = document.getElementById('savedAddressText');
+    const saveAddressWrap = document.getElementById('saveAddressWrap');
+    const saveAddressEl = document.getElementById('saveAddress');
     const paymentMethodEl = document.getElementById('paymentMethod');
     const paymentDetails = document.getElementById('paymentDetails');
     const cardFields = document.getElementById('cardFields');
@@ -164,6 +191,9 @@
     const checkoutBtn = document.getElementById('checkoutBtn');
 
     let cartItems = [], cartTotal = 0;
+    let profile = null;
+    let addressMode = 'new';
+    const requiredAddressFields = ['first_name', 'last_name', 'street_address', 'city', 'state', 'zip'];
 
     function refreshDebug() {
       const el = document.getElementById('apiDebug');
@@ -175,6 +205,82 @@
       if (v === 'COD') { paymentDetails.style.display = 'none'; cardFields.style.display = 'none'; upiFields.style.display = 'none'; }
       else { paymentDetails.style.display = 'block'; cardFields.style.display = (v === 'CARD') ? 'block' : 'none'; upiFields.style.display = (v === 'UPI') ? 'block' : 'none'; }
     });
+
+    document.querySelectorAll('.address-mode').forEach(button => {
+      button.addEventListener('click', () => setAddressMode(button.dataset.mode));
+    });
+
+    function setAddressMode(mode) {
+      addressMode = mode;
+      document.querySelectorAll('.address-mode').forEach(button => {
+        button.classList.toggle('active', button.dataset.mode === mode);
+      });
+
+      const useSaved = mode === 'saved';
+      addressFields.style.display = useSaved ? 'none' : 'block';
+      saveAddressWrap.style.display = useSaved ? 'none' : 'flex';
+      saveAddressEl.checked = mode === 'edit';
+
+      if (mode === 'edit') hydrateAddressFields();
+      if (mode === 'new') clearAddressFields();
+    }
+
+    function hydrateAddressFields() {
+      const nameParts = String(profile?.full_name || '').trim().split(/\s+/);
+      document.getElementById('first_name').value = nameParts[0] || '';
+      document.getElementById('last_name').value = nameParts.slice(1).join(' ') || '';
+      document.getElementById('street_address').value = profile?.address || '';
+      document.getElementById('phone').value = profile?.phone || '';
+    }
+
+    function clearAddressFields() {
+      requiredAddressFields.concat(['street_address2']).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+    }
+
+    function validateManualAddress() {
+      const requiredIds = addressMode === 'edit'
+        ? ['first_name', 'street_address']
+        : requiredAddressFields;
+
+      for (const id of requiredIds) {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) {
+          el.focus();
+          document.getElementById('formMsg').textContent = 'Please complete the delivery address.';
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function buildManualAddress(fd) {
+      return [
+        `${fd.first_name} ${fd.last_name}`.trim(),
+        fd.street_address,
+        fd.street_address2,
+        `${fd.city}, ${fd.state} ${fd.zip}`.trim(),
+        fd.country,
+        `Phone: ${fd.phone || profile?.phone || ''}`
+      ].filter(Boolean).join('\n');
+    }
+
+    async function loadSavedAddress() {
+      profile = await getProfile();
+      if (profile?.address) {
+        savedAddressText.textContent = profile.address;
+        savedAddressPanel.style.display = 'grid';
+        noAddressPanel.style.display = 'none';
+        document.getElementById('phone').value = profile.phone || '';
+        setAddressMode('saved');
+      } else {
+        savedAddressPanel.style.display = 'none';
+        noAddressPanel.style.display = 'block';
+        setAddressMode('new');
+      }
+    }
 
     async function loadCart() {
       summaryEl.textContent = 'Loading cart...';
@@ -248,15 +354,22 @@
       e.preventDefault(); checkoutBtn.disabled = true; document.getElementById('formMsg').textContent = '';
       const fd = Object.fromEntries(new FormData(form).entries());
 
-      // Concatenate address fields
-      const fullAddress = [
-        `${fd.first_name} ${fd.last_name}`,
-        fd.street_address,
-        fd.street_address2,
-        `${fd.city}, ${fd.state} ${fd.zip}`,
-        fd.country,
-        `Phone: ${fd.phone}`
-      ].filter(Boolean).join('\n');
+      let fullAddress = '';
+      if (addressMode === 'saved' && profile?.address) {
+        fullAddress = profile.address;
+      } else {
+        if (!validateManualAddress()) { checkoutBtn.disabled = false; return; }
+        fullAddress = buildManualAddress(fd);
+        if (saveAddressEl.checked) {
+          const addressRes = await fetchJson('/api/user/address', { method: 'PUT', body: { address: fullAddress } });
+          if (addressRes.ok) {
+            profile = Object.assign({}, profile, { address: fullAddress });
+            showToast('Address saved to your account', 'success');
+          } else {
+            showToast(addressRes.message || 'Order will continue, but address was not saved.', 'error');
+          }
+        }
+      }
 
       const payload = {
         address: fullAddress,
@@ -281,11 +394,10 @@
           }
         }).catch(() => { });
       }
-      try { window.open(`/api/orders/${orderId}/invoice`, '_blank'); } catch (e) { }
       location.href = `/billing.html?order_id=${orderId}`;
     });
 
-    (async function init() { await loadCart(); })();
+    (async function init() { await Promise.all([loadSavedAddress(), loadCart()]); })();
   </script>
   <script>
     // Guard for browser extensions that cause "listener returned true" console error.

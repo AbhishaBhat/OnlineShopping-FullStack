@@ -47,7 +47,9 @@
   <script type="module">
     import { updateNav, redirectIfNotLoggedIn, formatCurrency, fetchJson } from '/js/common.js';
     await updateNav();
-    redirectIfNotLoggedIn();
+    if (!redirectIfNotLoggedIn()) {
+      await new Promise(() => {});
+    }
 
     const ordersList = document.getElementById('ordersList');
 

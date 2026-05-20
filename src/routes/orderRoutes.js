@@ -6,5 +6,6 @@ const { checkout, listOrders, getOrder, invoicePDF } = require('../controllers/o
 router.post('/orders/checkout', authenticate, checkout);
 router.get('/orders', authenticate, listOrders);
 router.get('/orders/:id', authenticate, getOrder);
+router.get('/orders/:id/invoice', authenticate, invoicePDF);
 
 module.exports = router;
