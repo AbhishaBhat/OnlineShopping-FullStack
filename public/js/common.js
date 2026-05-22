@@ -85,6 +85,7 @@ export async function updateNav() {
         <li><a href="/categories.html">Collections</a></li>
         <li><a href="/products.html">Explore</a></li>
         <li><a href="/orders.html">Orders</a></li>
+        ${logged ? `<li><a href="/profile.html">Profile</a></li>` : ''}
         ${isAdmin ? `<li><a href="/admin.html">Admin</a></li>` : ''}
       </ul>
       <div class="nav-actions">

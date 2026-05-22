@@ -9,7 +9,10 @@ async function authenticate(req, res, next) {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     // fetch fresh user using user_id
-    const [rows] = await db.query('SELECT user_id, full_name, email, role, phone, address, status FROM users WHERE user_id = ?', [payload.id]);
+    const [rows] = await db.query(
+      'SELECT user_id, full_name, email, role, phone, address, status, last_login, created_at FROM users WHERE user_id = ?',
+      [payload.id]
+    );
     if (!rows.length) return res.status(401).json({ ok: false, message: 'Invalid token' });
     req.user = rows[0];
     next();

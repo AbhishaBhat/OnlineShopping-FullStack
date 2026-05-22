@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>Your Profile</title>
+  <title>Your Profile - Happy Shopping</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
@@ -11,19 +11,76 @@
 
 <body>
   <div id="siteNav"></div>
-  <main class="container-main">
-    <section class="glass-container fade-up p-5 text-center" style="max-width: 600px; margin: 0 auto;">
-      <div class="mb-5">
-        <div class="cat-icon" style="font-size: 5rem; animation: float 4s ease-in-out infinite;">👤</div>
-        <h2 id="name" class="text-gradient mt-4" style="font-size: 3rem;">Cosmic Profiler</h2>
+  <main class="container-main profile-page">
+    <section class="profile-hero glass-container fade-up">
+      <div class="profile-avatar" id="profileAvatar">U</div>
+      <div class="profile-identity">
+        <p class="eyebrow">My Account</p>
+        <h1 id="profileName">Your Profile</h1>
+        <p id="profileEmail" class="profile-email">Loading account details...</p>
       </div>
-      <div id="details" class="small text-muted mb-5 p-4 rounded-4"
-        style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);">
-        <p>Syncing with your account data...</p>
+      <div class="profile-actions">
+        <a href="/orders.html" class="btn">Orders</a>
+        <a href="/products.html" class="btn btn-secondary">Shop</a>
       </div>
-      <div class="d-flex gap-3 justify-content-center">
-        <a href="/orders.html" class="btn">Mission History</a>
-        <a href="/index.html" class="btn btn-secondary">Explore More</a>
+    </section>
+
+    <section class="metric-grid profile-metrics" aria-label="Profile overview">
+      <div class="metric-card">
+        <span>Orders</span>
+        <strong id="ordersCount">-</strong>
+        <small id="latestOrder">No order activity loaded yet</small>
+      </div>
+      <div class="metric-card">
+        <span>Cart Items</span>
+        <strong id="cartCount">-</strong>
+        <small>Items waiting in your cart</small>
+      </div>
+      <div class="metric-card">
+        <span>Wishlist</span>
+        <strong id="wishlistCount">-</strong>
+        <small>Saved products</small>
+      </div>
+      <div class="metric-card">
+        <span>Account</span>
+        <strong id="accountStatus">-</strong>
+        <small id="memberSince">Member details loading</small>
+      </div>
+    </section>
+
+    <section class="profile-layout">
+      <div class="panel profile-panel">
+        <div class="panel-head">
+          <h2>Personal Details</h2>
+          <span class="badge" id="profileRole">Customer</span>
+        </div>
+        <div id="profileDetails" class="profile-detail-grid">
+          <div class="skeleton-line profile-skeleton"></div>
+          <div class="skeleton-line profile-skeleton"></div>
+          <div class="skeleton-line profile-skeleton"></div>
+        </div>
+      </div>
+
+      <div class="panel profile-panel">
+        <div class="panel-head">
+          <h2>Delivery Address</h2>
+        </div>
+        <form id="addressForm" class="profile-address-form">
+          <label class="form-label" for="addressInput">Saved address</label>
+          <textarea id="addressInput" class="form-control" rows="5" placeholder="Add your delivery address"></textarea>
+          <button type="submit" class="btn w-100">Save Address</button>
+          <p id="addressStatus" class="form-status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel profile-panel">
+      <div class="panel-head">
+        <h2>Recent Activity</h2>
+        <a href="/orders.html" class="btn btn-secondary">View All</a>
+      </div>
+      <div id="recentOrders" class="compact-list">
+        <div class="notice">Loading recent orders...</div>
       </div>
     </section>
   </main>
