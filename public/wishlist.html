@@ -41,10 +41,14 @@
       moveWishlistToCart,
       removeFromWishlist,
       updateNavCounts,
-      isLoggedIn
+      isLoggedIn,
+      redirectIfNotLoggedIn
     } from '/js/common.js';
 
     await updateNav();
+    if (!redirectIfNotLoggedIn()) {
+      await new Promise(() => {});
+    }
 
     const listEl = document.getElementById('wishlist-items');
     const debugEl = document.getElementById('wishDebug');

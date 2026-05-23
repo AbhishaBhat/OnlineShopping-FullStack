@@ -100,7 +100,11 @@ export async function updateNav() {
   searchForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const q = document.getElementById('navSearchInput').value.trim();
-    if (q) location.href = `/products.html?q=${encodeURIComponent(q)}`;
+    if (q) {
+      const searchUrl = new URL('/products.html', window.location.origin);
+      searchUrl.searchParams.set('q', q);
+      window.location.assign(searchUrl.href);
+    }
   });
 
   const logout = document.getElementById('logoutBtn');

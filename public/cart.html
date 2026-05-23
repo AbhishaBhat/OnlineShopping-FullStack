@@ -41,9 +41,12 @@
   <div id="siteFooter"></div>
 
   <script type="module">
-    import { updateNav, isLoggedIn, fetchJson, formatCurrency, saveLatestOrder, updateNavCounts } from '/js/common.js';
+    import { updateNav, isLoggedIn, fetchJson, formatCurrency, redirectIfNotLoggedIn } from '/js/common.js';
     // ensure nav updated first
     await updateNav();
+    if (!redirectIfNotLoggedIn()) {
+      await new Promise(() => {});
+    }
 
     // query DOM elements AFTER nav update and DOM ready
     const itemsArea = document.getElementById('itemsArea');

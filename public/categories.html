@@ -24,9 +24,8 @@
   <div id="siteFooter"></div>
 
   <script type="module">
-    import { updateNav, fetchJson, redirectIfNotLoggedIn } from '/js/common.js';
+    import { updateNav, fetchJson } from '/js/common.js';
     await updateNav();
-    redirectIfNotLoggedIn();
 
     const fallback = [
       { id: 'electronics', name: 'Electronics', icon: '⚡', description: 'Phones, laptops & gadgets' },

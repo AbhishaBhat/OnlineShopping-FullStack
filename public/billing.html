@@ -53,7 +53,7 @@
 
     if (!order) {
       details.innerHTML = '<div class="notice">No order found. Please complete checkout first.</div>';
-      btn.disabled = true;
+      if (btn) btn.disabled = true;
     } else {
       const itemsHtml = (order.items || []).map(item => `
         <div class="list-row">

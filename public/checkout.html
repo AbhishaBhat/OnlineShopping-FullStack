@@ -172,7 +172,11 @@
   </main>
 
   <script type="module">
-    import { formatCurrency, fetchJson, getProfile, showToast } from '/js/common.js';
+    import { updateNav, formatCurrency, fetchJson, getProfile, showToast, redirectIfNotLoggedIn } from '/js/common.js';
+    await updateNav();
+    if (!redirectIfNotLoggedIn()) {
+      await new Promise(() => {});
+    }
 
     const summaryEl = document.getElementById('summary');
     const totalEl = document.getElementById('orderTotal');

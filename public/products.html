@@ -54,7 +54,6 @@
       updateNav,
       fetchJson,
       isLoggedIn,
-      redirectIfNotLoggedIn,
       updateNavCounts,
       formatCurrency,
       addToCart,
@@ -62,7 +61,6 @@
     } from '/js/common.js';
 
     await updateNav();
-    redirectIfNotLoggedIn();
 
     const params = new URLSearchParams(location.search);
     const cid = params.get('category_id') || params.get('cat');
@@ -73,6 +71,8 @@
     const stockFilter = document.getElementById('stockFilter');
     const sortBy = document.getElementById('sortBy');
     let currentProducts = [];
+
+    if (searchQuery) localSearch.value = searchQuery;
 
     [localSearch, stockFilter, sortBy].forEach(control => {
       control.addEventListener('input', applyProductControls);
